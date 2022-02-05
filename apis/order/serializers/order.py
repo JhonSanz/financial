@@ -9,7 +9,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            "pk", "owner", "order_date", "currency", "purchase_price",
+            "id", "owner", "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "comission_convertion", "comission_purchase_binance",
             "type", "type_str"
@@ -20,8 +20,12 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            "owner", "order_date", "currency", "purchase_price",
+            "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "comission_convertion", "comission_purchase_binance",
             "type",
         ]
+
+    def create(self, validated_data):
+        owner = self.context['request'].user
+        return super().create({**validated_data, 'owner': owner})

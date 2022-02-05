@@ -1,5 +1,6 @@
 
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from apis.order.serializers.order import OrderSerializer, OrderCreateSerializer
 from apps.order.models import Order
 from apis.utils.paginator import CustomPagination
@@ -9,6 +10,7 @@ class OrderApi(viewsets.ModelViewSet):
     queryset = Order.objects
     serializer_class = OrderSerializer
     pagination_class = CustomPagination
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         filters = []
