@@ -156,3 +156,6 @@ from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=240),
 }
+
+import django_heroku
+django_heroku.settings(locals())

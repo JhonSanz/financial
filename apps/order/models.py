@@ -23,4 +23,4 @@ class Order(CommonData):
     type = models.PositiveSmallIntegerField(choices=ORDER_TYPE)
 
     def __str__(self):
-        return f'{self.currency}: {self.amount_usd} USD'
+        return f'{self.currency}: {self.invested_amount_usd} USD'
