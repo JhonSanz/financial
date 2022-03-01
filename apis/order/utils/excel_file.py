@@ -15,10 +15,12 @@ class FileReader:
         'amount_usd', 'amount_currency_sold'
     ]
 
-    def __init__(self, file):
+    def __init__(self, file, request):
         self.file = file
         self.df = self.convert(file)
         self.columns = []
+        self.orders = []
+        self.request = request
 
     @staticmethod
     def convert(file):
@@ -62,6 +64,8 @@ class FileReader:
             .reset_index() \
             .drop('level_0', axis=1)\
             .set_index(['position', 'level_1'])
+        self.df['date'] = pd.to_datetime(self.df['date']).dt.date
+        self.df['date_sale'] = pd.to_datetime(self.df['date_sale']).dt.date
 
     def validate_file(self):
         if self.df.empty:
@@ -121,16 +125,28 @@ class FileReader:
                 else value['amount_currency_sold']
             ),
         }, aux))
-        print(data)
-        # serializer = OrderCreateSerializer(data=aux, many=True)
-        # if not serializer.is_valid():
-        #     raise ValidationError(detail={
-        #         'detail': f'Invalid row data',
-        #         'data': serializer.errors
-        #     })
+        serializer = OrderCreateSerializer(data=data, many=True)
+        if not serializer.is_valid():
+            raise ValidationError(detail={
+                'detail': f'Invalid row data',
+                'data': serializer.errors
+            })
+        self.orders.extend(data)
 
     def create_records(self):
         self.df.apply(lambda x: self.validate_row(x), axis=1)
+        serializer = OrderCreateSerializer(
+            data=self.orders, many=True,
+            context={
+                "request": self.request
+            }
+        )
+        if not serializer.is_valid():
+            raise ValidationError(detail={
+                'detail': f'Invalid row data',
+                'data': serializer.errors
+            })
+        serializer.save()
 
     def return_as_dict(self):
         self.df.dropna(how='all', inplace=True)

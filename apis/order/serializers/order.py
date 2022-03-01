@@ -10,7 +10,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = [
             "id", "owner", "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
-            "comission_convertion", "comission_purchase_binance",
+            "commission_conversion", "commission_purchase_binance",
             "type", "type_str"
         ]
 
@@ -21,7 +21,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         fields = [
             "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
-            "comission_convertion", "comission_purchase_binance",
+            "commission_conversion", "commission_purchase_binance",
             "type", "amount_currency"
         ]
 

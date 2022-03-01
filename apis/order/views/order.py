@@ -32,6 +32,6 @@ class OrderApi(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def upload_excel_file(self, request):
-        fr = FileReader(request.FILES['files'])
+        fr = FileReader(request.FILES['files'], self.request)
         data = fr.return_as_dict()
         return Response({}, status=status.HTTP_200_OK)
