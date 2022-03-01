@@ -16,10 +16,11 @@ class Order(CommonData):
     order_date = models.DateField()
     currency = models.CharField(max_length=10)
     purchase_price = models.FloatField()
+    amount_currency = models.FloatField()
     invested_amount_usd = models.FloatField()
     invested_amount_cop = models.FloatField()
-    comission_convertion = models.FloatField()
-    comission_purchase_binance = models.FloatField()
+    commission_conversion = models.FloatField()
+    commission_purchase_binance = models.FloatField()
     type = models.PositiveSmallIntegerField(choices=ORDER_TYPE)
 
     def __str__(self):

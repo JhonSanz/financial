@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 from apps.order.models import Order
 
@@ -23,7 +22,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "comission_convertion", "comission_purchase_binance",
-            "type",
+            "type", "amount_currency"
         ]
 
     def create(self, validated_data):

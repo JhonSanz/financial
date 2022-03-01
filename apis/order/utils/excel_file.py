@@ -1,15 +1,17 @@
 import pandas as pd
 import numpy as np
 from rest_framework.serializers import ValidationError
+from apps.order.models import Order
+from apis.order.serializers.order import OrderCreateSerializer
 
 
 class FileReader:
     FILE_COLUMNS_NAMES_BUY = [
-        'Fecha', 'purchase_price', 'invested_amount_usd',
-        'comission_binance', 'amount'
+        'date', 'purchase_price', 'invested_amount_usd',
+        'commission_binance', 'amount_currency'
     ]
     FILE_COLUMNS_NAMES_SALE = [
-        'fecha', 'sale_price', 'earned_amount_usd',
+        'date_sale', 'sale_price', 'earned_amount_usd',
         'amount_usd', 'amount_currency_sold'
     ]
 
@@ -45,15 +47,21 @@ class FileReader:
             lambda x: self.set_position_index(x, ranges),
             axis=1
         )
-        self.df.set_index(['position', 'index'], inplace=True)
         # Remove sub tables titles
+        self.df.drop('index', axis=1, inplace=True)
         self.df = self.df[self.df[self.df.columns[0]] != self.columns[0]]
-        self.df.columns = self.columns
+        self.df.columns = self.columns + ['position']
         self.df = self.df[
             ~self.df[self.FILE_COLUMNS_NAMES_BUY[0]].isin(['', np.nan])
             &
             ~self.df[self.FILE_COLUMNS_NAMES_SALE[0]].isin(['', np.nan])
         ]
+        self.df = self.df \
+            .groupby('position', as_index=False) \
+            .apply(lambda x: x.reset_index(drop=True)) \
+            .reset_index() \
+            .drop('level_0', axis=1)\
+            .set_index(['position', 'level_1'])
 
     def validate_file(self):
         if self.df.empty:
@@ -80,11 +88,55 @@ class FileReader:
                 'detail': 'Invalid columns names'
             })
 
+    def validate_row(self, row):
+        if row.name[-1] != 0:
+            aux = [
+                {**row[self.FILE_COLUMNS_NAMES_SALE].to_dict(), 'type': Order.SELL}
+            ]
+        else:
+            aux = [
+                {**row[self.FILE_COLUMNS_NAMES_BUY].to_dict(), 'type': Order.BUY},
+                {**row[self.FILE_COLUMNS_NAMES_SALE].to_dict(), 'type': Order.SELL}
+            ]
+        data = list(map(lambda value: {
+            "order_date": value['date'] if 'date' in value else value['date_sale'],
+            "currency": self.file.name.split('.')[0],
+            "purchase_price": (
+                value['purchase_price'] if 'purchase_price' in value
+                else value['sale_price']
+            ),
+            "invested_amount_usd": (
+                value['invested_amount_usd'] if 'invested_amount_usd' in value
+                else value['earned_amount_usd']
+            ),
+            "invested_amount_cop": 0,
+            "commission_conversion": 0,
+            "commission_purchase_binance": (
+                value['commission_binance'] if 'commission_binance' in value
+                else 0
+            ),
+            "type": value['type'],
+            "amount_currency": (
+                value['amount_currency'] if 'amount_currency' in value
+                else value['amount_currency_sold']
+            ),
+        }, aux))
+        print(data)
+        # serializer = OrderCreateSerializer(data=aux, many=True)
+        # if not serializer.is_valid():
+        #     raise ValidationError(detail={
+        #         'detail': f'Invalid row data',
+        #         'data': serializer.errors
+        #     })
+
+    def create_records(self):
+        self.df.apply(lambda x: self.validate_row(x), axis=1)
+
     def return_as_dict(self):
         self.df.dropna(how='all', inplace=True)
         self.df.dropna(axis=1, how='all', inplace=True)
         self.columns = self.df.iloc[0].tolist()
-        # self.validate_file()
+        self.validate_file()
         self.clean_file()
-        print(self.df)
+        self.create_records()
         return {}
