@@ -22,6 +22,8 @@ class Order(CommonData):
     commission_conversion = models.FloatField()
     commission_purchase_binance = models.FloatField()
     type = models.PositiveSmallIntegerField(choices=ORDER_TYPE)
+    position = models.ForeignKey(
+        'self', null=True, on_delete=models.PROTECT)
 
     def __str__(self):
         return f'{self.currency}: {self.invested_amount_usd} USD'

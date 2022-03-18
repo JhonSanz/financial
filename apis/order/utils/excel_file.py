@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 from rest_framework.serializers import ValidationError
 from apps.order.models import Order
-from apis.order.serializers.order import OrderCreateSerializer
+from apis.order.serializers.order import (
+    OrderCreateSerializer, OrderFileCreateSerializer)
 
 
 class FileReader:
@@ -92,6 +93,17 @@ class FileReader:
                 'detail': 'Invalid columns names'
             })
 
+    def add_to_schema(self, data):
+        if len(data) > 1:
+            self.orders.append(
+                {
+                    'position': data[0],
+                    'sales': [data[-1]]
+                }
+            )
+        else:
+            self.orders[-1]['sales'].append(data[0])
+
     def validate_row(self, row):
         if row.name[-1] != 0:
             aux = [
@@ -131,11 +143,11 @@ class FileReader:
                 'detail': f'Invalid row data',
                 'data': serializer.errors
             })
-        self.orders.extend(data)
+        self.add_to_schema(data)
 
     def create_records(self):
         self.df.apply(lambda x: self.validate_row(x), axis=1)
-        serializer = OrderCreateSerializer(
+        serializer = OrderFileCreateSerializer(
             data=self.orders, many=True,
             context={
                 "request": self.request
