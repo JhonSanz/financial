@@ -2,6 +2,7 @@ from rest_framework import serializers
 from apps.order.models import Order
 from django.db import transaction
 
+
 class OrderSerializer(serializers.ModelSerializer):
     type_str = serializers.CharField(source='get_type_display')
 
@@ -13,6 +14,21 @@ class OrderSerializer(serializers.ModelSerializer):
             "commission_conversion", "commission_purchase_binance",
             "type", "type_str"
         ]
+
+
+class OrderPositionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+
+    def to_representation(self, instance):
+        print(instance)
+        return {
+            'position': OrderSerializer(instance).data,
+            'sales': OrderSerializer(
+                Order.objects.filter(position=instance),
+                many=True
+            ).data
+        }
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):

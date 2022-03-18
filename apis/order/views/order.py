@@ -4,7 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import JSONParser, MultiPartParser
-from apis.order.serializers.order import OrderSerializer, OrderCreateSerializer
+from apis.order.serializers.order import (
+    OrderSerializer, OrderCreateSerializer,
+    OrderPositionsSerializer
+)
 from apps.order.models import Order
 from apis.utils.paginator import CustomPagination
 from apis.order.utils.excel_file import FileReader
@@ -28,10 +31,21 @@ class OrderApi(viewsets.ModelViewSet):
             self.serializer_class = None
         if self.action in ["create", "update"]:
             self.serializer_class = OrderCreateSerializer
+        if self.action in ["position"]:
+            self.serializer_class = OrderPositionsSerializer
         return self.serializer_class
 
     @action(detail=False, methods=['post'])
     def upload_excel_file(self, request):
         fr = FileReader(request.FILES['files'], self.request)
-        data = fr.return_as_dict()
+        fr.return_as_dict()
         return Response({}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def position(self, request):
+        serializer = self.get_serializer_class()
+        data = serializer(
+            Order.objects.filter(type=Order.BUY, owner=request.user),
+            many=True
+        ).data
+        return Response({'data': data}, status=status.HTTP_200_OK)
