@@ -21,11 +21,10 @@ class OrderPositionsSerializer(serializers.ModelSerializer):
         model = Order
 
     def to_representation(self, instance):
-        print(instance)
         return {
             'position': OrderSerializer(instance).data,
             'sales': OrderSerializer(
-                Order.objects.filter(position=instance),
+                Order.objects.filter(position=instance).exclude(pk=instance.pk),
                 many=True
             ).data
         }
@@ -56,10 +55,13 @@ class OrderFileCreateSerializer(serializers.Serializer):
     @transaction.atomic
     def create(self, validated_data):
         owner = self.context['request'].user
-        position = Order.objects.create(**{
+        position = Order(**{
             **validated_data.get('position'),
             'owner': owner
         })
+        position.save()
+        position.position = position
+        position.save()
         if validated_data.get('sales'):
             Order.objects.bulk_create([
                 Order(**{

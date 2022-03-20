@@ -20,8 +20,8 @@ class CurrencyApi(viewsets.ModelViewSet):
                 .filter(owner=self.request.user)
                 .annotate(
                     negative=Case(
-                        When(type=0, then=F('invested_amount_usd') * -1),
-                        default=F('invested_amount_usd')
+                        When(type=0, then=F('amount_currency') * -1),
+                        default=F('amount_currency')
                     )
                 )
                 .values('currency')

@@ -1,3 +1,4 @@
+from django.db.models import Q, Sum, When, Case, F
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -21,9 +22,42 @@ class OrderApi(viewsets.ModelViewSet):
     parser_class = (MultiPartParser, JSONParser)
 
     def get_queryset(self):
-        filters = []
+        filters = [Q(owner=self.request.user)]
         if self.action in ["list"]:
-            self.queryset = Order.objects.filter(owner=self.request.user)
+            self.queryset = Order.objects
+        if self.action in ["position"]:
+            filters.append(Q(type=Order.BUY))
+            if "currency" in self.request.GET:
+                filters.append(Q(currency=self.request.GET["currency"]))
+            if "closed" in self.request.GET:
+                subquery = (
+                    Order.objects
+                    .annotate(
+                        negative=Case(
+                            When(type=0, then=F('amount_currency') * -1),
+                            default=F('amount_currency')
+                        )
+                    )
+                    .values('position', 'currency')
+                    .annotate(amount=Sum('negative'))
+                    .filter(amount__gt=0)
+                )
+                self.queryset = Order.objects.filter(
+                    pk__in=subquery.values_list('position', flat=True)
+                )
+            if "order_date" in self.request.GET:
+                filters.append(Q(order_date=self.request.GET["order_date"]))
+            if (
+                "date_from" in self.request.GET and
+                "date_to" in self.request.GET
+            ):
+                filters.extend([
+                    Q(order_date__gte=self.request.GET["date_from"]),
+                    Q(order_date__lte=self.request.GET["date_to"])
+                ])
+            if "win" in self.request.GET:
+                filters.append()
+
         return self.queryset.filter(*filters)
 
     def get_serializer_class(self):
@@ -43,9 +77,10 @@ class OrderApi(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def position(self, request):
+        filtered_data = self.get_queryset()
         serializer = self.get_serializer_class()
         data = serializer(
-            Order.objects.filter(type=Order.BUY, owner=request.user),
+            filtered_data.filter(type=Order.BUY, owner=request.user),
             many=True
         ).data
         return Response({'data': data}, status=status.HTTP_200_OK)
