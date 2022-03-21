@@ -54,7 +54,8 @@ class OrderApi(viewsets.ModelViewSet):
                     Q(order_date__lte=self.request.GET["date_to"])
                 ])
             if "win" in self.request.GET:
-                filters.append()
+                pass
+                # filters.append()
 
         return self.queryset.filter(*filters)
 
