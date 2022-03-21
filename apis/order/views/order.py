@@ -29,7 +29,7 @@ class OrderApi(viewsets.ModelViewSet):
             filters.append(Q(type=Order.BUY))
             if "currency" in self.request.GET:
                 filters.append(Q(currency=self.request.GET["currency"]))
-            if "closed" in self.request.GET:
+            if "open" in self.request.GET:
                 subquery = (
                     Order.objects
                     .annotate(
@@ -45,8 +45,6 @@ class OrderApi(viewsets.ModelViewSet):
                 self.queryset = Order.objects.filter(
                     pk__in=subquery.values_list('position', flat=True)
                 )
-            if "order_date" in self.request.GET:
-                filters.append(Q(order_date=self.request.GET["order_date"]))
             if (
                 "date_from" in self.request.GET and
                 "date_to" in self.request.GET

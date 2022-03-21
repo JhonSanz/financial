@@ -12,7 +12,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "id", "owner", "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "commission_conversion", "commission_purchase_binance",
-            "type", "type_str"
+            "type", "type_str", "amount_currency"
         ]
 
 
