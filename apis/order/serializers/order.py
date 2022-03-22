@@ -4,6 +4,7 @@ from django.db import transaction
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    currency = serializers.SerializerMethodField()
     type_str = serializers.CharField(source='get_type_display')
 
     class Meta:
@@ -14,6 +15,14 @@ class OrderSerializer(serializers.ModelSerializer):
             "commission_conversion", "commission_purchase_binance",
             "type", "type_str", "amount_currency"
         ]
+
+    def get_currency(self, instance):
+        data = instance.currency.split('|')
+        return {
+            "id": data[0],
+            "symbol": data[1],
+            "name": data[-1]
+        }
 
 
 class OrderPositionsSerializer(serializers.ModelSerializer):
