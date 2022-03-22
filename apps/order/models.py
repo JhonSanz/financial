@@ -14,7 +14,7 @@ class Order(CommonData):
 
     owner = models.ForeignKey(User, on_delete=models.PROTECT)
     order_date = models.DateField()
-    currency = models.CharField(max_length=10)
+    currency = models.CharField(max_length=250)
     purchase_price = models.FloatField()
     amount_currency = models.FloatField()
     invested_amount_usd = models.FloatField()
