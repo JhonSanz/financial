@@ -9,7 +9,7 @@ from apis.currency.serializers.currency import (
     CurrencySerializer, CurrencyAllSerializer)
 from apps.order.models import Order
 from apis.utils.paginator import CustomPagination
-
+from apis.utils.currency_list import CURRENCIES
 
 class CurrencyApi(viewsets.ModelViewSet):
     queryset = Order.objects
@@ -51,3 +51,7 @@ class CurrencyApi(viewsets.ModelViewSet):
             many=True
         ).data
         return Response({'data': data}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def gecko_coins(self, request):
+        return Response({'data': CURRENCIES}, status=status.HTTP_200_OK)

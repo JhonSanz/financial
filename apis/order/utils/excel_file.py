@@ -69,6 +69,8 @@ class FileReader:
         self.df['date_sale'] = pd.to_datetime(self.df['date_sale']).dt.date
 
     def validate_file(self):
+        # if self.file.name.split('.')[0]
+
         if self.df.empty:
             raise ValidationError(detail={
                 'detail': 'Empty file'
