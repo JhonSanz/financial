@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from apps.order.models import Order
+from rest_framework.serializers import ValidationError
 from django.db import transaction
+from apis.utils.currency_name_from_object import convert_object_to_name
+from apis.utils.currency_list import get_currencies
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -40,6 +43,8 @@ class OrderPositionsSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
+    currency = serializers.JSONField()
+
     class Meta:
         model = Order
         fields = [
@@ -49,9 +54,25 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "type", "amount_currency"
         ]
 
+    def validate_currency(self, value):
+        aux = value.copy()
+        if aux.keys() != {'id', 'symbol', 'name', 'label'}:
+            raise ValidationError(detail={
+                'detail': 'Invalid form data'
+            })
+        aux.pop('label')
+        if not filter(lambda x: x == aux, get_currencies()):
+            raise ValidationError(detail={
+                'detail': 'Currency not found'
+            })
+        return value
+
     def create(self, validated_data):
         owner = self.context['request'].user
-        return super().create({**validated_data, 'owner': owner})
+        currency = convert_object_to_name(validated_data.pop('currency'))
+        return super().create({
+            **validated_data, 'owner': owner, 'currency': currency
+        })
 
 
 class OrderFileCreateSerializer(serializers.Serializer):
@@ -64,9 +85,12 @@ class OrderFileCreateSerializer(serializers.Serializer):
     @transaction.atomic
     def create(self, validated_data):
         owner = self.context['request'].user
+        currency = convert_object_to_name(
+            validated_data['position'].pop('currency'))
         position = Order(**{
             **validated_data.get('position'),
-            'owner': owner
+            'owner': owner,
+            'currency': currency
         })
         position.save()
         position.position = position
@@ -77,6 +101,7 @@ class OrderFileCreateSerializer(serializers.Serializer):
                     **sale,
                     'position': position,
                     'owner': owner,
+                    'currency': currency
                 })
                 for sale in validated_data.get('sales')
             ])

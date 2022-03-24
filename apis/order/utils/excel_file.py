@@ -5,7 +5,6 @@ from rest_framework.serializers import ValidationError
 from apps.order.models import Order
 from apis.order.serializers.order import (
     OrderCreateSerializer, OrderFileCreateSerializer)
-from apis.utils.currency_list import get_currencies
 
 
 class FileReader:
@@ -119,12 +118,7 @@ class FileReader:
             raise ValidationError(detail={
                 'detail': 'Invalid form data'
             })
-        new_request.pop('label')
-        if not filter(lambda x: x == new_request, get_currencies()):
-            raise ValidationError(detail={
-                'detail': 'Currency not found'
-            })
-        self.title = f'{new_request["id"]}|{new_request["symbol"]}|{new_request["name"]}'
+        self.title = new_request
 
     def validate_row(self, row):
         if row.name[-1] != 0:
