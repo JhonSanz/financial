@@ -1,9 +1,11 @@
-import pandas as pd
+import json
 import numpy as np
+import pandas as pd
 from rest_framework.serializers import ValidationError
 from apps.order.models import Order
 from apis.order.serializers.order import (
     OrderCreateSerializer, OrderFileCreateSerializer)
+from apis.utils.currency_list import get_currencies
 
 
 class FileReader:
@@ -22,6 +24,7 @@ class FileReader:
         self.columns = []
         self.orders = []
         self.request = request
+        self.title = None
 
     @staticmethod
     def convert(file):
@@ -69,8 +72,6 @@ class FileReader:
         self.df['date_sale'] = pd.to_datetime(self.df['date_sale']).dt.date
 
     def validate_file(self):
-        # if self.file.name.split('.')[0]
-
         if self.df.empty:
             raise ValidationError(detail={
                 'detail': 'Empty file'
@@ -106,6 +107,25 @@ class FileReader:
         else:
             self.orders[-1]['sales'].append(data[0])
 
+    def setup_name(self):
+        new_request = self.request.data.dict()['currency']
+        if not new_request:
+            raise ValidationError(detail={
+                'detail': 'Invalid form data'
+            })
+        try:
+            new_request = json.loads(new_request)
+        except json.decoder.JSONDecodeError:
+            raise ValidationError(detail={
+                'detail': 'Invalid form data'
+            })
+        new_request.pop('label')
+        if not filter(lambda x: x == new_request, get_currencies()):
+            raise ValidationError(detail={
+                'detail': 'Currency not found'
+            })
+        self.title = f'{new_request["id"]}|{new_request["symbol"]}|{new_request["name"]}'
+
     def validate_row(self, row):
         if row.name[-1] != 0:
             aux = [
@@ -118,7 +138,7 @@ class FileReader:
             ]
         data = list(map(lambda value: {
             "order_date": value['date'] if 'date' in value else value['date_sale'],
-            "currency": self.file.name.split('.')[0],
+            "currency": self.title,
             "purchase_price": (
                 value['purchase_price'] if 'purchase_price' in value
                 else value['sale_price']
@@ -166,6 +186,7 @@ class FileReader:
         self.df.dropna(how='all', inplace=True)
         self.df.dropna(axis=1, how='all', inplace=True)
         self.columns = self.df.iloc[0].tolist()
+        self.setup_name()
         self.validate_file()
         self.clean_file()
         self.create_records()
