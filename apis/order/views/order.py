@@ -1,3 +1,4 @@
+import json
 from django.db.models import Q, Sum, When, Case, F
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +13,7 @@ from apis.order.serializers.order import (
 from apps.order.models import Order
 from apis.utils.paginator import CustomPagination
 from apis.order.utils.excel_file import FileReader
+from apis.utils.currency_name_from_object import convert_object_to_name
 
 
 class OrderApi(viewsets.ModelViewSet):
@@ -28,7 +30,9 @@ class OrderApi(viewsets.ModelViewSet):
         if self.action in ["position"]:
             filters.append(Q(type=Order.BUY))
             if "currency" in self.request.GET:
-                filters.append(Q(currency=self.request.GET["currency"]))
+                currency = convert_object_to_name(
+                    json.loads(self.request.GET["currency"]))
+                filters.append(Q(currency=currency))
             if "open" in self.request.GET:
                 subquery = (
                     Order.objects
