@@ -80,10 +80,11 @@ class OrderApi(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def position(self, request):
-        filtered_data = self.get_queryset()
-        serializer = self.get_serializer_class()
-        data = serializer(
-            filtered_data.filter(type=Order.BUY, owner=request.user),
-            many=True
-        ).data
-        return Response({'data': data}, status=status.HTTP_200_OK)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
