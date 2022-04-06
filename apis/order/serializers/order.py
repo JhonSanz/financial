@@ -1,3 +1,4 @@
+from django.db.models import When, Case, Sum, F
 from rest_framework import serializers
 from apps.order.models import Order
 from rest_framework.serializers import ValidationError
@@ -33,12 +34,35 @@ class OrderPositionsSerializer(serializers.ModelSerializer):
         model = Order
 
     def to_representation(self, instance):
+        sales = Order.objects.filter(position=instance).exclude(pk=instance.pk)
+        totals = sales.annotate(
+            negative_amount=Case(
+                When(type=0, then=F('amount_currency') * -1),
+                default=F('amount_currency')
+            ),
+            negative_invested_amount_usd=Case(
+                When(type=0, then=F('invested_amount_usd') * -1),
+                default=F('invested_amount_usd')
+            )
+        ).aggregate(
+            currency_total=Sum('negative_amount'),
+            usd_total=Sum('negative_invested_amount_usd'),
+        )
+        currency_total = totals.get("currency_total")
+        usd_total = totals.get("usd_total")
         return {
             'position': OrderSerializer(instance).data,
-            'sales': OrderSerializer(
-                Order.objects.filter(position=instance).exclude(pk=instance.pk),
-                many=True
-            ).data
+            'sales': OrderSerializer(sales, many=True).data,
+            'totals': {
+                "currency_total": (
+                    (currency_total if currency_total is not None else 0)
+                    + instance.amount_currency
+                ),
+                "usd_total": (
+                    (usd_total if usd_total is not None else 0)
+                    + instance.invested_amount_usd
+                ),
+            }
         }
 
 
