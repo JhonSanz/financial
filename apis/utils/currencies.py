@@ -24,4 +24,14 @@ CURRENCIES = [
         "symbol": "sol",
         "name": "Solana"
     },
+    {
+        "id": "binancecoin",
+        "symbol": "bnb",
+        "name": "BNB"
+    },
+    {
+        "id": "binance-coin-wormhole",
+        "symbol": "bnb",
+        "name": "Binance Coin (Wormhole)"
+    },
 ]
