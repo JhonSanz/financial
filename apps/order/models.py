@@ -1,7 +1,22 @@
 
 from django.db import models
+from django.db.models import Case, F, When
 from apps.utils.base_table import CommonData
 from apps.user.models import User
+
+
+class NegativeColumnsManager(models.QuerySet):
+    def negative_values(self):
+        return self.annotate(
+            negative_amount=Case(
+                When(type=0, then=F('amount_currency') * -1),
+                default=F('amount_currency')
+            ),
+            negative_invested_amount_usd=Case(
+                When(type=0, then=F('invested_amount_usd') * -1),
+                default=F('invested_amount_usd')
+            )
+        )
 
 
 class Order(CommonData):
@@ -24,6 +39,8 @@ class Order(CommonData):
     type = models.PositiveSmallIntegerField(choices=ORDER_TYPE)
     position = models.ForeignKey(
         'self', null=True, on_delete=models.PROTECT)
+    objects = models.Manager()
+    negative_columns = NegativeColumnsManager.as_manager()
 
     def __str__(self):
         return f'{self.currency}: {self.invested_amount_usd} USD'

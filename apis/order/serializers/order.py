@@ -34,17 +34,8 @@ class OrderPositionsSerializer(serializers.ModelSerializer):
         model = Order
 
     def to_representation(self, instance):
-        sales = Order.objects.filter(position=instance).exclude(pk=instance.pk)
-        totals = sales.annotate(
-            negative_amount=Case(
-                When(type=0, then=F('amount_currency') * -1),
-                default=F('amount_currency')
-            ),
-            negative_invested_amount_usd=Case(
-                When(type=0, then=F('invested_amount_usd') * -1),
-                default=F('invested_amount_usd')
-            )
-        ).aggregate(
+        sales = Order.negative_columns.filter(position=instance).exclude(pk=instance.pk)
+        totals = sales.negative_values().aggregate(
             currency_total=Sum('negative_amount'),
             usd_total=Sum('negative_invested_amount_usd'),
         )

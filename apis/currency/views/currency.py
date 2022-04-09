@@ -21,17 +21,15 @@ class CurrencyApi(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.action in ["list"]:
             self.queryset = (
-                Order.objects
+                Order.negative_columns
                 .filter(owner=self.request.user)
-                .annotate(
-                    negative=Case(
-                        When(type=0, then=F('amount_currency') * -1),
-                        default=F('amount_currency')
-                    )
-                )
+                .negative_values()
                 .values('currency')
-                .annotate(amount=Sum('negative'))
-                .order_by('-amount')
+                .annotate(
+                    amount_currency=Sum('negative_amount'),
+                    amount_usd=Sum('negative_invested_amount_usd')
+                )
+                .order_by('-amount_currency')
             )
         if self.action in ['all']:
             self.queryset = Order.objects.values('currency').distinct()

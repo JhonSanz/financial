@@ -35,15 +35,10 @@ class OrderApi(viewsets.ModelViewSet):
                 filters.append(Q(currency=currency))
             if "open" in self.request.GET:
                 subquery = (
-                    Order.objects
-                    .annotate(
-                        negative=Case(
-                            When(type=0, then=F('amount_currency') * -1),
-                            default=F('amount_currency')
-                        )
-                    )
+                    Order.negative_columns
+                    .negative_values()
                     .values('position', 'currency')
-                    .annotate(amount=Sum('negative'))
+                    .annotate(amount=Sum('negative_amount'))
                     .filter(amount__gt=0)
                 )
                 self.queryset = Order.objects.filter(
