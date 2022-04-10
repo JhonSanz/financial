@@ -130,6 +130,7 @@ class FileReader:
                 {**row[self.FILE_COLUMNS_NAMES_BUY].to_dict(), 'type': Order.BUY},
                 {**row[self.FILE_COLUMNS_NAMES_SALE].to_dict(), 'type': Order.SELL}
             ]
+        print(aux)
         data = list(map(lambda value: {
             "order_date": value['date'] if 'date' in value else value['date_sale'],
             "currency": self.title,
@@ -140,6 +141,10 @@ class FileReader:
             "invested_amount_usd": (
                 value['invested_amount_usd'] if 'invested_amount_usd' in value
                 else value['earned_amount_usd']
+            ),
+            "amount_usd": (
+                value['amount_usd'] if 'amount_usd' in value
+                else 0
             ),
             "invested_amount_cop": 0,
             "commission_conversion": 0,

@@ -33,6 +33,7 @@ class Order(CommonData):
     purchase_price = models.FloatField()
     amount_currency = models.FloatField()
     invested_amount_usd = models.FloatField()
+    amount_usd = models.FloatField()
     invested_amount_cop = models.FloatField()
     commission_conversion = models.FloatField()
     commission_purchase_binance = models.FloatField()

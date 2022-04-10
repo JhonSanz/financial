@@ -17,7 +17,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "id", "owner", "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "commission_conversion", "commission_purchase_binance",
-            "type", "type_str", "amount_currency"
+            "type", "type_str", "amount_currency", "amount_usd"
         ]
 
     def get_currency(self, instance):
@@ -66,7 +66,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "commission_conversion", "commission_purchase_binance",
-            "type", "amount_currency"
+            "type", "amount_currency", "amount_usd"
         ]
 
     def validate_currency(self, value):
