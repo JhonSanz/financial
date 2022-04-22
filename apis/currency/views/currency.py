@@ -23,11 +23,12 @@ class CurrencyApi(viewsets.ModelViewSet):
             self.queryset = (
                 Order.negative_columns
                 .filter(owner=self.request.user)
-                .negative_values()
+                .negative_values([
+                    'amount_currency',
+                ])
                 .values('currency')
                 .annotate(
-                    amount_currency=Sum('negative_amount'),
-                    amount_usd=Sum('negative_invested_amount_usd')
+                    amount_currency=Sum('negative_amount_currency'),
                 )
                 .order_by('-amount_currency')
             )

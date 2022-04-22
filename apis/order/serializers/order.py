@@ -35,12 +35,15 @@ class OrderPositionsSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         sales = Order.negative_columns.filter(position=instance).exclude(pk=instance.pk)
-        totals = sales.negative_values().aggregate(
-            currency_total=Sum('negative_amount'),
-            usd_total=Sum('negative_invested_amount_usd'),
+        totals = sales.negative_values([
+            'amount_currency', 'amount_usd'
+        ]).aggregate(
+            currency_total=Sum('negative_amount_currency'),
+            usd_total=Sum('negative_amount_usd'),
         )
         currency_total = totals.get("currency_total")
         usd_total = totals.get("usd_total")
+        print('test', usd_total)
         return {
             'position': OrderSerializer(instance).data,
             'sales': OrderSerializer(sales, many=True).data,

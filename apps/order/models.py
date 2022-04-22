@@ -6,17 +6,14 @@ from apps.user.models import User
 
 
 class NegativeColumnsManager(models.QuerySet):
-    def negative_values(self):
-        return self.annotate(
-            negative_amount=Case(
-                When(type=0, then=F('amount_currency') * -1),
-                default=F('amount_currency')
-            ),
-            negative_invested_amount_usd=Case(
-                When(type=0, then=F('invested_amount_usd') * -1),
-                default=F('invested_amount_usd')
+    def negative_values(self, field=[]):
+        return self.annotate(**{
+            f'negative_{item}': Case(
+                When(type=0, then=F(item) * -1),
+                default=F(item)
             )
-        )
+            for item in field
+        })
 
 
 class Order(CommonData):

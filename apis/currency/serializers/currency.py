@@ -6,11 +6,10 @@ from apps.order.models import Order
 class CurrencySerializer(serializers.ModelSerializer):
     currency = serializers.SerializerMethodField()
     amount_currency = serializers.FloatField()
-    amount_usd = serializers.FloatField()
 
     class Meta:
         model = Order
-        fields = ["currency", "amount_currency", "amount_usd"]
+        fields = ["currency", "amount_currency"]
 
     def get_currency(self, instance):
         data = instance['currency'].split('|')
