@@ -69,7 +69,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             "order_date", "currency", "purchase_price",
             "invested_amount_usd", "invested_amount_cop",
             "commission_conversion", "commission_purchase_binance",
-            "type", "amount_currency", "amount_usd"
+            "type", "amount_currency",
         ]
 
     def validate_currency(self, value):
@@ -89,7 +89,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         owner = self.context['request'].user
         currency = convert_object_to_name(validated_data.pop('currency'))
         return super().create({
-            **validated_data, 'owner': owner, 'currency': currency
+            **validated_data, 'owner': owner, 'currency': currency,
+            'amount_usd': 0
         })
 
 
