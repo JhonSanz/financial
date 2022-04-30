@@ -43,7 +43,6 @@ class OrderPositionsSerializer(serializers.ModelSerializer):
         )
         currency_total = totals.get("currency_total")
         usd_total = totals.get("usd_total")
-        print('test', usd_total)
         return {
             'position': OrderSerializer(instance).data,
             'sales': OrderSerializer(sales, many=True).data,
